@@ -1,4 +1,27 @@
 require_relative 'ui'
+require_relative 'ranking'
+def chooseSecretWord
+    warningChoosingWord
+    text = File.read("dictionary.txt")
+    allWords = text.split "\n"
+    chosenNumber = rand(allWords.size)
+    secretWord = allWords[chosenNumber].downcase
+    warningChosenWord secretWord
+end
+
+def chooseSecretWordWithLessMemory
+    warningChoosingWord
+    file = File.new("dictionary.txt")
+    wordQuantity = file.gets.to_i
+    chosenNumber = rand(wordQuantity)
+    for line in 1..(chosenNumber -1)
+      file.gets
+    end
+    secretWord = file.gets.downcase
+    file.close
+    warningChosenWord secretWord
+end
+
 def askAValidGuess (guesses, errors, mask)
     guessHeader guesses, errors, mask
     loop do
@@ -24,12 +47,7 @@ def maskedWord (guesses, secretWord)
     mask
 end
 
-def guessHeader(guesses, errors, mask)
-    puts "\n\n\n\n"
-    puts "Secret word: #{mask}"
-    puts "Errors so far: #{errors}"
-    puts "Guesses so far #{guesses}"
-end
+
 
 def play(name)
     secretWord = chooseSecretWord
@@ -65,12 +83,19 @@ def play(name)
         end
     end
     warningScore score
+    score
 end
 
 def hangman
     name = welcome
+    totalScore = 0
+    warningCurrentWinner readRanking
     loop do
-        play name
+        totalScore += play name
+        warningTotalScore totalScore
+        if readRanking[1].to_i < totalScore
+            saveRanking name, totalScore
+        end
         if playAgain?
             break
         end
