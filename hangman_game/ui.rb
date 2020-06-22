@@ -44,8 +44,9 @@ def playAgain?
     dontWannaPlay = wannaPlay.upcase == "N"
 end
 
-def askGuess(guesses, errors)
+def askGuess(guesses, errors, mask)
     puts "\n\n\n\n"
+    puts "Secret word: #{mask}"
     puts "Errors so far: #{errors}"
     puts "Guesses so far #{guesses}"
     puts "Type a letter or a word."
