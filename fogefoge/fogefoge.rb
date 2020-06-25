@@ -1,24 +1,45 @@
 require_relative 'ui'
 
-
-def moveFantasma(mapa, linha, coluna)
-    posicao = [linha, coluna+1]
-    if posicaoValida? mapa, posicao
-        mapa[linha][coluna] = " "
-        mapa[posicao[0]][posicao[1]] = "F"
+def posicoesValidasAPartirDe (mapa, novoMapa, posicao)
+    posicoes = []
+    baixo = [posicao[0] + 1, posicao[1]]
+    if posicaoValida?(mapa, baixo) && posicaoValida?(novoMapa, baixo)
+        posicoes << baixo
     end
+    direita = [posicao[0], posicao[1] + 1]
+    if posicaoValida?(mapa, direita) && posicaoValida?(novoMapa, direita)
+        posicoes << direita
+    end
+    esquerda = [posicao[0], posicao[1] -1]
+    if posicaoValida?(mapa, esquerda) && posicaoValida?(novoMapa, esquerda)
+        posicoes << esquerda
+    end
+    cima  = [posicao[0] - 1, posicao[1]]
+    if posicaoValida?(mapa, cima) && posicaoValida?(novoMapa, cima)
+        posicoes << cima
+    end
+    posicoes
+end
+def moveFantasma(mapa, novoMapa, linha, coluna)
+    posicoes = posicoesValidasAPartirDe mapa, novoMapa, [linha, coluna]
+    return if posicoes.empty?
+    posicao = posicoes[0]
+    mapa[linha][coluna] = " "
+    novoMapa[posicao[0]][posicao[1]] = "F"
 end
 
 def moveFantasmas(mapa)
     caractereDoFantasma = "F"
+    novoMapa = copiaMapa mapa
     mapa.each_with_index do |linhaAtual, linha|
         linhaAtual.chars.each_with_index do |caractereAtual, coluna|
             ehFantasma = caractereAtual == caractereDoFantasma
             if ehFantasma
-                moveFantasma mapa, linha, coluna
+                moveFantasma mapa, novoMapa, linha, coluna
             end
         end
     end
+    novoMapa
 end
 
 def joga(nome)
@@ -33,7 +54,7 @@ def joga(nome)
         end
         mapa[heroi[0]][heroi[1]] = " "
         mapa[novaPosicao[0]][novaPosicao[1]] = "H"
-        moveFantasmas mapa
+        mapa = moveFantasmas mapa
     end
 end
 
@@ -47,10 +68,8 @@ def posicaoValida?(mapa, posicao)
     if estourouLinha || estourouColuna
         return false
     end
-    if mapa[posicao[0]][posicao[1]] == "X"
-        return false
-    end
-    if mapa[posicao[0]][posicao[1]] == "F"
+    valorAtual = mapa[posicao[0]][posicao[1]]
+    if valorAtual == "X" ||  valorAtual == "F"
         return false
     end
     true
@@ -73,6 +92,9 @@ end
 def iniciaFogeFoge
     nome = boasVindas
     joga nome
+end
+def copiaMapa(mapa)
+    novoMapa = mapa.join("\n").tr("F", " ").split "\n"
 end
 
 def leMapa(numero)
