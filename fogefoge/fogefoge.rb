@@ -1,29 +1,26 @@
 require_relative 'ui'
+require_relative 'heroi'
+
+def somaVetor(vetor1, vetor2)
+    [vetor1[0] + vetor2[0], vetor1[1] + vetor2[1]]
+end
 
 def posicoesValidasAPartirDe (mapa, novoMapa, posicao)
     posicoes = []
-    baixo = [posicao[0] + 1, posicao[1]]
-    if posicaoValida?(mapa, baixo) && posicaoValida?(novoMapa, baixo)
-        posicoes << baixo
-    end
-    direita = [posicao[0], posicao[1] + 1]
-    if posicaoValida?(mapa, direita) && posicaoValida?(novoMapa, direita)
-        posicoes << direita
-    end
-    esquerda = [posicao[0], posicao[1] -1]
-    if posicaoValida?(mapa, esquerda) && posicaoValida?(novoMapa, esquerda)
-        posicoes << esquerda
-    end
-    cima  = [posicao[0] - 1, posicao[1]]
-    if posicaoValida?(mapa, cima) && posicaoValida?(novoMapa, cima)
-        posicoes << cima
+    movimentos = [[+1, 0], [0, +1], [-1, 0], [0, -1]]
+    movimentos.each do |movimento|
+        novaPosicao = somaVetor(movimento, posicao)
+        if posicaoValida?(mapa, novaPosicao) && posicaoValida?(novoMapa, novaPosicao)
+            posicoes << novaPosicao
+        end
     end
     posicoes
 end
 def moveFantasma(mapa, novoMapa, linha, coluna)
     posicoes = posicoesValidasAPartirDe mapa, novoMapa, [linha, coluna]
     return if posicoes.empty?
-    posicao = posicoes[0]
+    aleatoria = rand posicoes.size
+    posicao = posicoes[aleatoria]
     mapa[linha][coluna] = " "
     novoMapa[posicao[0]][posicao[1]] = "F"
 end
@@ -42,19 +39,46 @@ def moveFantasmas(mapa)
     novoMapa
 end
 
+def jogadorPerdeu?(mapa)
+     perdeu = !encontraJogador(mapa)
+end
+
+def executaRemocao(mapa, posicao, quantidade)
+    if mapa[posicao.linha][posicao.coluna] == "X"
+        return
+    end
+    posicao.removeDo mapa
+    remove mapa, posicao, quantidade - 1
+end
+
+def remove(mapa, posicao, quantidade)
+    if quantidade == 0
+        return
+    end
+    executaRemocao mapa, posicao.direita, quantidade
+end
+
 def joga(nome)
     mapa = leMapa(1)
     while true
         desenha mapa
         direcao = pedeMovimento
         heroi = encontraJogador mapa
-        novaPosicao = calculaNovaPosicao heroi, direcao
-        if !posicaoValida? mapa, novaPosicao
+        novaPosicao = heroi.calculaNovaPosicao direcao
+        if !posicaoValida? mapa, novaPosicao.toArray
             next
         end
-        mapa[heroi[0]][heroi[1]] = " "
-        mapa[novaPosicao[0]][novaPosicao[1]] = "H"
+        heroi.removeDo mapa
+        forUmaBomba = mapa[novaPosicao.linha][novaPosicao.coluna] == "*"
+        if forUmaBomba
+            remove mapa, novaPosicao, 4
+        end
+        novaPosicao.colocaNo mapa
         mapa = moveFantasmas mapa
+        if jogadorPerdeu? mapa
+            gameOver
+            break
+        end
     end
 end
 
@@ -75,19 +99,7 @@ def posicaoValida?(mapa, posicao)
     true
 end
 
-def calculaNovaPosicao(heroi, direcao)
-    heroi = heroi.dup
-    movimentos = {
-        "W" => [-1, 0],
-        "A" => [0, -1],
-        "S" => [+1, 0],
-        "D" => [0, +1]
-    }
-    movimento = movimentos[direcao]
-    heroi[0] += movimento[0]
-    heroi[1] += movimento[1]
-    heroi
-end
+
 
 def iniciaFogeFoge
     nome = boasVindas
@@ -108,7 +120,11 @@ def encontraJogador(mapa)
     mapa.each_with_index do |linhaAtual, linha|
         colunaDoHeroi = linhaAtual.index caracterHeroi
         if colunaDoHeroi
-            return [linha, colunaDoHeroi]
+            jogador = Heroi.new
+            jogador.linha = linha
+            jogador.coluna = colunaDoHeroi
+            return jogador
         end
     end
+    nil
 end
